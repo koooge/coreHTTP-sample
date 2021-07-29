@@ -1,0 +1,3 @@
+[submodule "coreHTTP"]
+	path = coreHTTP
+	url = https://github.com/FreeRTOS/coreHTTP.git
