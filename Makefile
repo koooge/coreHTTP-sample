@@ -16,7 +16,10 @@ http_get:
 		platform/posix/transport/src/plaintext_posix.c \
 		platform/posix/transport/src/sockets_posix.c
 
-https_get:
+get_pem:
+	curl -sSL --url https://www.amazontrust.com/repository/AmazonRootCA1.pem -o certificates/AmazonRootCA1.crt
+
+https_get: get_pem
 	mkdir -p build
 	gcc \
 		-I. \
@@ -29,8 +32,9 @@ https_get:
 		https_get.c \
 		coreHTTP/source/core_http_client.c \
 		coreHTTP/source/dependency/3rdparty/http_parser/http_parser.c \
-		platform/posix/transport/src/plaintext_posix.c \
-		platform/posix/transport/src/sockets_posix.c
+		platform/posix/transport/src/openssl_posix.c \
+		platform/posix/transport/src/sockets_posix.c \
+		-lssl -lcrypto
 
 run: run_https_get
 

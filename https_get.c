@@ -4,41 +4,50 @@
 
 #include "core_http_config.h"
 #include "core_http_client.h"
-#include "plaintext_posix.h"
+#include "openssl_posix.h"
 
-#define HTTP_PORT 80
+#define HTTPS_PORT 443
 #define TRANSPORT_SEND_RECV_TIMEOUT_MS 1000
 #define USER_BUFFER_LENGTH 1024
 // #define REQUEST_BODY "Hello, world!"
 
-int32_t connectToServer(NetworkContext_t *pNetworkContext, const char *host, const unsigned int port);
-int32_t sendHttpRequest(const TransportInterface_t *pTransportInterface,
+int32_t connectToServer(NetworkContext_t *pNetworkContext,
+    const char *pRootCaPath,
+    const char *sniHostName,
+    const char *host,
+    size_t hostLen,
+    const unsigned int port);
+HTTPResponse_t request(const TransportInterface_t *pTransportInterface,
                         const char *pMethod,
                         size_t methodLen,
                         const char *pHost,
                         size_t hostLen,
                         const char *pPath,
                         size_t pathLen);
-void http_get();
+void https_get();
 
 struct NetworkContext {
-  PlaintextParams_t *pParams;
+  OpensslParams_t *pParams;
 };
 
 uint8_t userBuffer[USER_BUFFER_LENGTH];
 
-int32_t connectToServer(NetworkContext_t *pNetworkContext, const char *host, const unsigned int port) {
+int32_t connectToServer(NetworkContext_t *pNetworkContext, const char *pRootCaPath, const char *sniHostName, const char *host, size_t hostLen, const unsigned int port) {
   int32_t returnStatus = EXIT_FAILURE;
-  SocketStatus_t socketStatus;
+  OpensslStatus_t opensslStatus;
+  OpensslCredentials_t opensslCredentials = {0};
   ServerInfo_t serverInfo;
 
+  opensslCredentials.pRootCaPath = pRootCaPath;
+  opensslCredentials.sniHostName = sniHostName;
+
   serverInfo.pHostName = host;
-  serverInfo.hostNameLength = sizeof(host) - 1U;
+  serverInfo.hostNameLength = hostLen;
   serverInfo.port = port;
 
-  socketStatus = Plaintext_Connect(pNetworkContext, &serverInfo, TRANSPORT_SEND_RECV_TIMEOUT_MS, TRANSPORT_SEND_RECV_TIMEOUT_MS);
+  opensslStatus = Openssl_Connect(pNetworkContext, &serverInfo, &opensslCredentials, TRANSPORT_SEND_RECV_TIMEOUT_MS, TRANSPORT_SEND_RECV_TIMEOUT_MS);
 
-  if (socketStatus == SOCKETS_SUCCESS) {
+  if (opensslStatus == SOCKETS_SUCCESS) {
     returnStatus = EXIT_SUCCESS;
   } else {
     returnStatus = EXIT_FAILURE;
@@ -89,23 +98,26 @@ HTTPResponse_t request(const TransportInterface_t *pTransportInterface,
   return response;
 }
 
-void http_get() {
+void https_get() {
   int32_t returnStatus = EXIT_SUCCESS;
   TransportInterface_t transportInterface = {0};
   NetworkContext_t networkContext;
-  PlaintextParams_t plaintextParams;
-  networkContext.pParams = &plaintextParams;
+  OpensslParams_t opensslParams;
+  networkContext.pParams = &opensslParams;
 
-  char *hostname = "httpbin.org";
-  char *path = "/get";
+  const char *pRootCaPath = "certificates/AmazonRootCA1.crt";
+  const char *sniHostName = "httpbin.org";
+  const char *hostname = "httpbin.org";
+  const char *path = "/get";
 
-  returnStatus = connectToServer(&networkContext, hostname, HTTP_PORT);
+  returnStatus = connectToServer(&networkContext, pRootCaPath, sniHostName, hostname, 11, HTTPS_PORT);
 
-  transportInterface.recv = Plaintext_Recv;
-  transportInterface.send = Plaintext_Send;
+  transportInterface.recv = Openssl_Recv;
+  transportInterface.send = Openssl_Send;
   transportInterface.pNetworkContext = &networkContext;
 
-  HTTPResponse_t response = request(&transportInterface, "GET", 3, "httpbin.org", 11, "/get", 4);
+  HTTPResponse_t response = request(&transportInterface, "GET", 3, hostname, 11, path, 4);
+
   printf("Received HTTP response from %s%s...\n"
            "Response Headers: %s\n"
            "Response Status: %u\n"
@@ -115,11 +127,11 @@ void http_get() {
            response.statusCode,
            response.pBody);
 
-  Plaintext_Disconnect(&networkContext);
+  Openssl_Disconnect(&networkContext);
 }
 
 int main(void) {
-  http_get();
+  https_get();
 
   return 0;
 }
