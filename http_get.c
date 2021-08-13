@@ -12,7 +12,7 @@
 // #define REQUEST_BODY "Hello, world!"
 
 int32_t connectToServer(NetworkContext_t *pNetworkContext, const char *host, const unsigned int port);
-int32_t sendHttpRequest(const TransportInterface_t *pTransportInterface,
+HTTPResponse_t request(const TransportInterface_t *pTransportInterface,
                         const char *pMethod,
                         size_t methodLen,
                         const char *pHost,
