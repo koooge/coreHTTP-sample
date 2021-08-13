@@ -11,7 +11,7 @@
 #define USER_BUFFER_LENGTH 1024
 // #define REQUEST_BODY "Hello, world!"
 
-int32_t connectToServer(NetworkContext_t *pNetworkContext, const char *host, const unsigned int port);
+int32_t connectToServer(NetworkContext_t *pNetworkContext, const char *host, size_t hostLen, const unsigned int port);
 HTTPResponse_t request(const TransportInterface_t *pTransportInterface,
                         const char *pMethod,
                         size_t methodLen,
@@ -27,13 +27,13 @@ struct NetworkContext {
 
 uint8_t userBuffer[USER_BUFFER_LENGTH];
 
-int32_t connectToServer(NetworkContext_t *pNetworkContext, const char *host, const unsigned int port) {
+int32_t connectToServer(NetworkContext_t *pNetworkContext, const char *host, size_t hostLen, const unsigned int port) {
   int32_t returnStatus = EXIT_FAILURE;
   SocketStatus_t socketStatus;
   ServerInfo_t serverInfo;
 
   serverInfo.pHostName = host;
-  serverInfo.hostNameLength = sizeof(host) - 1U;
+  serverInfo.hostNameLength = hostLen;
   serverInfo.port = port;
 
   socketStatus = Plaintext_Connect(pNetworkContext, &serverInfo, TRANSPORT_SEND_RECV_TIMEOUT_MS, TRANSPORT_SEND_RECV_TIMEOUT_MS);
@@ -99,13 +99,13 @@ void http_get() {
   char *hostname = "httpbin.org";
   char *path = "/get";
 
-  returnStatus = connectToServer(&networkContext, hostname, HTTP_PORT);
+  returnStatus = connectToServer(&networkContext, hostname, 11, HTTP_PORT);
 
   transportInterface.recv = Plaintext_Recv;
   transportInterface.send = Plaintext_Send;
   transportInterface.pNetworkContext = &networkContext;
 
-  HTTPResponse_t response = request(&transportInterface, "GET", 3, "httpbin.org", 11, "/get", 4);
+  HTTPResponse_t response = request(&transportInterface, "GET", 3, hostname, 11, "/get", 4);
   printf("Received HTTP response from %s%s...\n"
            "Response Headers: %s\n"
            "Response Status: %u\n"
