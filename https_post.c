@@ -121,6 +121,7 @@ void https_post() {
   transportInterface.send = Openssl_Send;
   transportInterface.pNetworkContext = &networkContext;
 
+  // curl -XPOST -H 'Content-Type: ' https://httpbin.org/post -d 'Hello, world!'
   HTTPResponse_t response = request(&transportInterface, "POST", 4, hostname, 11, path, 5, body, bodyLen);
 
   printf("Received HTTP response from %s%s...\n"
