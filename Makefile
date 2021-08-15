@@ -1,7 +1,9 @@
 all: http_get https_get https_post
 
-http_get:
+prebuild:
 	mkdir -p build
+
+http_get: prebuild
 	gcc \
 		-I. \
 		-IcoreHTTP/source/include \
@@ -19,8 +21,7 @@ http_get:
 get_pem:
 	curl -sSL --url https://www.amazontrust.com/repository/AmazonRootCA1.pem -o certificates/AmazonRootCA1.crt
 
-https_get: get_pem
-	mkdir -p build
+https_get: prebuild get_pem
 	gcc \
 		-I. \
 		-IcoreHTTP/source/include \
@@ -36,8 +37,7 @@ https_get: get_pem
 		platform/posix/transport/src/sockets_posix.c \
 		-lssl -lcrypto
 
-https_post: get_pem
-	mkdir -p build
+https_post: prebuild get_pem
 	gcc \
 		-I. \
 		-IcoreHTTP/source/include \
@@ -53,6 +53,24 @@ https_post: get_pem
 		platform/posix/transport/src/sockets_posix.c \
 		-lssl -lcrypto
 
+https_post_json: prebuild get_pem
+	gcc \
+		-I. \
+		-IcoreHTTP/source/include \
+		-IcoreHTTP/source/interface \
+		-IcoreHTTP/source/dependency/3rdparty/http_parser \
+		-IcoreJSON/source/include \
+		-Ilogging-stack \
+		-Iplatform/posix/transport/include \
+		-o build/https_post_json.o \
+		https_post_json.c \
+		coreHTTP/source/core_http_client.c \
+		coreHTTP/source/dependency/3rdparty/http_parser/http_parser.c \
+		coreJSON/source/core_json.c \
+		platform/posix/transport/src/openssl_posix.c \
+		platform/posix/transport/src/sockets_posix.c \
+		-lssl -lcrypto
+
 run: run_https_get
 
 run_http_get: http_get
@@ -64,7 +82,10 @@ run_https_get: https_get
 run_https_post: https_post
 	./build/https_post.o
 
+run_https_post_json: https_post_json
+	./build/https_post_json.o
+
 clean:
 	rm -rf ./clean
 
-.PHONY: all http_get https_get https_post run run_http_get run_https_get run_https_post clean
+.PHONY: all prebuild http_get https_get https_post run run_http_get run_https_get run_https_post clean
