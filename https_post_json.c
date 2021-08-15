@@ -1,11 +1,11 @@
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
 
 #include "core_http_config.h"
 #include "core_http_client.h"
 #include "openssl_posix.h"
+#include "core_json.h"
 
 #define HTTPS_PORT 443
 #define TRANSPORT_SEND_RECV_TIMEOUT_MS 1000
@@ -134,6 +134,20 @@ void https_post() {
            response.pHeaders,
            response.statusCode,
            response.pBody);
+
+  char *value;
+  size_t valueLength;
+  JSONStatus_t result = JSON_Validate(response.pBody, response.bodyLen);
+  if (result == JSONSuccess) {
+    printf("%s\n", response.pBody);
+    result = JSON_Search(response.pBody, response.bodyLen, "json", sizeof("json") - 1U, &value, &valueLength);
+  }
+  if (result == JSONSuccess) {
+    char save = value[valueLength];
+    value[valueLength] = '\0';
+    printf("%s\n", value );
+    value[valueLength] = save;
+  }
 
   Openssl_Disconnect(&networkContext);
 }
