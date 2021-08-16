@@ -4,3 +4,6 @@
 [submodule "coreJSON"]
 	path = coreJSON
 	url = https://github.com/FreeRTOS/coreJSON.git
+[submodule "mbedtls"]
+	path = mbedtls
+	url = https://github.com/ARMmbed/mbedtls.git
