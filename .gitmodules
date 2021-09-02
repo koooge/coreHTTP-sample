@@ -7,3 +7,6 @@
 [submodule "mbedtls"]
 	path = mbedtls
 	url = https://github.com/ARMmbed/mbedtls.git
+[submodule "corePKCS11"]
+	path = corePKCS11
+	url = https://github.com/FreeRTOS/corePKCS11.git
