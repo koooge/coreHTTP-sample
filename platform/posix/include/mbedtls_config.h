@@ -1,5 +1,5 @@
 /*
- * AWS IoT Device SDK for Embedded C 202103.00
+ * AWS IoT Device SDK for Embedded C 202108.00
  * Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -79,6 +79,7 @@
 #define MBEDTLS_CIPHER_C
 #define MBEDTLS_CMAC_C
 #define MBEDTLS_CTR_DRBG_C
+#define MBEDTLS_DEBUG_C
 #define MBEDTLS_ECDH_C
 #define MBEDTLS_ECDSA_C
 #define MBEDTLS_ECP_C
@@ -88,6 +89,7 @@
 #define MBEDTLS_MD_C
 #define MBEDTLS_OID_C
 #define MBEDTLS_PEM_PARSE_C
+#define MBEDTLS_PEM_WRITE_C
 #define MBEDTLS_PK_C
 #define MBEDTLS_PK_PARSE_C
 #define MBEDTLS_PK_WRITE_C
@@ -101,7 +103,9 @@
 #define MBEDTLS_THREADING_PTHREAD
 #define MBEDTLS_THREADING_C
 #define MBEDTLS_X509_USE_C
+#define MBEDTLS_X509_CREATE_C
 #define MBEDTLS_X509_CRT_PARSE_C
+#define MBEDTLS_X509_CSR_WRITE_C
 #define MBEDTLS_NET_C
 #define MBEDTLS_TIMING_C
 
