@@ -37,8 +37,8 @@ https_get: prebuild get_pem
 		platform/posix/transport/src/sockets_posix.c \
 		-lssl -lcrypto
 
-https_get_mbedtls: prebuild get_pem core_pkcs11
-	gcc \
+https_get_mbedtls: prebuild get_pem
+	gcc -static \
 		-I. \
 		-IcoreHTTP/source/include \
 		-IcoreHTTP/source/interface \
@@ -57,7 +57,7 @@ https_get_mbedtls: prebuild get_pem core_pkcs11
 		corePKCS11/source/core_pki_utils.c \
 		platform/posix/transport/src/mbedtls_pkcs11_posix.c \
 		-Lmbedtls/library \
-		-lmbedtls -lmbedx509 -lmbedcrypto
+		-lmbedcrypto -lmbedx509 -lmbedtls
 
 https_post: prebuild get_pem
 	gcc \
@@ -111,6 +111,6 @@ run_https_post_json: https_post_json
 	./build/https_post_json.o
 
 clean:
-	rm -rf ./clean
+	rm -rf ./build
 
-.PHONY: all prebuild http_get https_get core_pkcs11 https_get_mbedtls https_post run run_http_get run_https_get run_https_get_mbedtls run_https_post clean
+.PHONY: all prebuild http_get https_get https_get_mbedtls https_post run run_http_get run_https_get run_https_get_mbedtls run_https_post clean
