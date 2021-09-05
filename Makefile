@@ -1,4 +1,4 @@
-all: http_get https_get https_post
+all: http_get https_get https_get_mbedtls https_post https_post_json
 
 prebuild:
 	mkdir -p build
@@ -36,6 +36,28 @@ https_get: prebuild get_pem
 		platform/posix/transport/src/openssl_posix.c \
 		platform/posix/transport/src/sockets_posix.c \
 		-lssl -lcrypto
+
+https_get_mbedtls: prebuild get_pem core_pkcs11
+	gcc \
+		-I. \
+		-IcoreHTTP/source/include \
+		-IcoreHTTP/source/interface \
+		-IcoreHTTP/source/dependency/3rdparty/http_parser \
+		-Ilogging-stack \
+		-Iplatform/posix/transport/include \
+		-IcorePKCS11/source/dependency/3rdparty/pkcs11 \
+		-IcorePKCS11/source/include \
+		-Imbedtls/include \
+		-o build/https_get_mbedtls.o \
+		https_get_mbedtls.c \
+		coreHTTP/source/core_http_client.c \
+		coreHTTP/source/dependency/3rdparty/http_parser/http_parser.c \
+		corePKCS11/source/portable/mbedtls/core_pkcs11_mbedtls.c \
+		corePKCS11/source/core_pkcs11.c \
+		corePKCS11/source/core_pki_utils.c \
+		platform/posix/transport/src/mbedtls_pkcs11_posix.c \
+		-Lmbedtls/library \
+		-lmbedtls -lmbedx509 -lmbedcrypto
 
 https_post: prebuild get_pem
 	gcc \
@@ -79,6 +101,9 @@ run_http_get: http_get
 run_https_get: https_get
 	./build/https_get.o
 
+run_https_get_mbedtls: https_get_mbedtls
+	./build/https_get_mbedtls.o
+
 run_https_post: https_post
 	./build/https_post.o
 
@@ -88,4 +113,4 @@ run_https_post_json: https_post_json
 clean:
 	rm -rf ./clean
 
-.PHONY: all prebuild http_get https_get https_post run run_http_get run_https_get run_https_post clean
+.PHONY: all prebuild http_get https_get core_pkcs11 https_get_mbedtls https_post run run_http_get run_https_get run_https_get_mbedtls run_https_post clean
