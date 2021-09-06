@@ -37,7 +37,12 @@ https_get: prebuild get_pem
 		platform/posix/transport/src/sockets_posix.c \
 		-lssl -lcrypto
 
-https_get_mbedtls: prebuild get_pem
+mbedtls:
+	cd mbedtls; \
+	make all
+
+
+https_get_mbedtls: prebuild get_pem mbedtls
 	gcc -static \
 		-I. \
 		-IcoreHTTP/source/include \
@@ -113,4 +118,4 @@ run_https_post_json: https_post_json
 clean:
 	rm -rf ./build
 
-.PHONY: all prebuild http_get https_get https_get_mbedtls https_post run run_http_get run_https_get run_https_get_mbedtls run_https_post clean
+.PHONY: all prebuild http_get https_get mbedtls https_get_mbedtls https_post run run_http_get run_https_get run_https_get_mbedtls run_https_post clean
