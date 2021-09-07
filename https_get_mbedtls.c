@@ -112,6 +112,10 @@ void https_get() {
   const char *path = "/get";
 
   returnStatus = connectToServer(&networkContext, pRootCaPath, sniHostName, hostname, 11, HTTPS_PORT);
+  if (returnStatus == EXIT_FAILURE) {
+    fprintf(stderr, "https_get: connectToServer Failed. returnStatus = %d\n", returnStatus);
+    return returnStatus;
+  }
 
   transportInterface.recv = Mbedtls_Pkcs11_Recv;
   transportInterface.send = Mbedtls_Pkcs11_Send;
