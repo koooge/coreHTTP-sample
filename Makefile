@@ -47,24 +47,12 @@ https_get_mbedtls: prebuild get_pem mbedtls
 		-IcoreHTTP/source/include \
 		-IcoreHTTP/source/interface \
 		-IcoreHTTP/source/dependency/3rdparty/http_parser \
-		-Ilogging-stack \
-		-Iplatform/posix/transport/include \
-		-Iplatform/posix/include \
-		-IcorePKCS11/source/dependency/3rdparty/pkcs11 \
-		-IcorePKCS11/source/include \
-		-IcorePKCS11/source/portable/os \
 		-Imbedtls/include \
 		-DMBEDTLS_CONFIG_FILE='<mbedtls_config.h>' \
 		-o build/https_get_mbedtls.o \
 		https_get_mbedtls.c \
 		coreHTTP/source/core_http_client.c \
 		coreHTTP/source/dependency/3rdparty/http_parser/http_parser.c \
-		corePKCS11/source/portable/mbedtls/core_pkcs11_mbedtls.c \
-		corePKCS11/source/core_pkcs11.c \
-		corePKCS11/source/core_pki_utils.c \
-		corePKCS11/source/portable/os/core_pkcs11_pal_utils.c \
-		corePKCS11/source/portable/os/posix/core_pkcs11_pal.c \
-		platform/posix/transport/src/mbedtls_pkcs11_posix.c \
 		-Lmbedtls/library \
 		-lmbedtls -lmbedcrypto -lmbedx509
 
