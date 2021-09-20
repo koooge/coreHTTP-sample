@@ -48,7 +48,6 @@ https_get_mbedtls: prebuild get_pem mbedtls
 		-IcoreHTTP/source/interface \
 		-IcoreHTTP/source/dependency/3rdparty/http_parser \
 		-Imbedtls/include \
-		-DMBEDTLS_CONFIG_FILE='<mbedtls_config.h>' \
 		-o build/https_get_mbedtls.o \
 		https_get_mbedtls.c \
 		coreHTTP/source/core_http_client.c \
