@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <assert.h>
@@ -11,7 +12,9 @@
 #include "mbedtls/net_sockets.h"
 #include "mbedtls/ssl.h"
 #include "mbedtls/ctr_drbg.h"
+#include "mbedtls/entropy.h"
 #include "mbedtls/error.h"
+#include "mbedtls/debug.h"
 
 #define HTTPS_PORT 443
 #define TRANSPORT_SEND_RECV_TIMEOUT_MS 1000
@@ -38,6 +41,8 @@ typedef struct MbedtlsContext {
   mbedtls_ssl_config config;
   mbedtls_ssl_context context;
   mbedtls_x509_crt rootCa;
+  mbedtls_ctr_drbg_context ctr_drbg;
+  mbedtls_entropy_context entropy;
 } MbedtlsContext_t;
 
 uint32_t Mbedtls_Connect(NetworkContext_t *pNetworkContext,
@@ -58,6 +63,9 @@ void contextFree(MbedtlsContext_t *pContext);
 struct NetworkContext {
   MbedtlsContext_t *pParams;
 };
+
+#define MBEDTLS_DEBUG_LOG_LEVEL 0
+void mbedtlsDebugPrint(void *ctx, int level, const char *pFile, int line, const char *pStr);
 /** platform imitation END */
 
 uint8_t userBuffer[USER_BUFFER_LENGTH];
@@ -100,12 +108,12 @@ HTTPResponse_t request(const TransportInterface_t *pTransportInterface,
 
   httpStatus = HTTPClient_Send(pTransportInterface,
                                  &requestHeaders,
-                                 0, // ( uint8_t * ) REQUEST_BODY,
+                                 NULL, // ( uint8_t * ) REQUEST_BODY,
                                  0, // REQUEST_BODY_LENGTH,
                                  &response,
                                  0);
   if (httpStatus != HTTPSuccess) {
-    fprintf(stderr, "request: HTTPClient_Send failed. Error=%s\n", HTTPClient_strerror(httpStatus));
+    fprintf(stderr, "request: HTTPClient_Send failed. Error = %s(%d)\n", HTTPClient_strerror(httpStatus), httpStatus);
   }
 
   return response;
@@ -165,7 +173,10 @@ uint32_t Mbedtls_Connect(NetworkContext_t *pNetworkContext,
   }
 
   mbedtls_ssl_conf_authmode(&(pNetworkContext->pParams->config), MBEDTLS_SSL_VERIFY_REQUIRED);
-  mbedtls_ssl_conf_rng(&(pNetworkContext->pParams->config), mbedtls_ctr_drbg_random, pNetworkContext->pParams);
+  mbedtls_ssl_conf_rng(&(pNetworkContext->pParams->config), mbedtls_ctr_drbg_random, &(pNetworkContext->pParams->ctr_drbg));
+  mbedtls_ssl_conf_read_timeout(&(pNetworkContext->pParams->config), recvTimeoutMs);
+  mbedtls_ssl_conf_dbg(&pNetworkContext->pParams->config, mbedtlsDebugPrint, NULL);
+  mbedtls_debug_set_threshold(MBEDTLS_DEBUG_LOG_LEVEL);
 
   // configureMbedtlsCertificates() BEGIN
   mbedtlsError = mbedtls_x509_crt_parse_file(&(pNetworkContext->pParams->rootCa), pRootCaPath);
@@ -190,6 +201,13 @@ uint32_t Mbedtls_Connect(NetworkContext_t *pNetworkContext,
                       mbedtls_net_send,
                       mbedtls_net_recv,
                       mbedtls_net_recv_timeout);
+
+  // configureMbedtlsFragmentLength() BEGIN
+  mbedtlsError = mbedtls_ssl_conf_max_frag_len(&(pNetworkContext->pParams->config), MBEDTLS_SSL_MAX_FRAG_LEN_4096);
+  if (mbedtlsError != 0) {
+    fprintf(stderr, "Mbedtls_Connect: mbedtls_ssl_conf_max_frag_len Failed. mbedtlsError = %d\n", mbedtlsError);
+  }
+  // configureMbedtlsFragmentLength() END
   // configureMbedtls() END
 
   char portStr[6] = {0};
@@ -198,7 +216,6 @@ uint32_t Mbedtls_Connect(NetworkContext_t *pNetworkContext,
   if (mbedtlsError != 0) {
     fprintf(stderr, "Mbedtls_Connect: mbedtls_net_connect Failed. mbedtlsError = %d\n", mbedtlsError);
   }
-
   do {
     mbedtlsError = mbedtls_ssl_handshake(&(pNetworkContext->pParams->context));
   } while((mbedtlsError == MBEDTLS_ERR_SSL_WANT_READ) || (mbedtlsError == MBEDTLS_ERR_SSL_WANT_WRITE));
@@ -214,7 +231,7 @@ int32_t Mbedtls_Recv(NetworkContext_t *pNetworkContext, void *pBuffer, size_t by
   int32_t tlsStatus = 0;
   tlsStatus = mbedtls_ssl_read(&(pNetworkContext->pParams->context), pBuffer, bytesToRecv);
   if (tlsStatus < 0) {
-    fprintf(stderr, "Mbedtls_Send: mbedtls_ssl_read Failed. tlsStatus = %d, mbedTLSError= %s : %s\n",
+    fprintf(stderr, "Mbedtls_Send: mbedtls_ssl_read Failed. tlsStatus = %d, mbedTLSError = %s : %s\n",
       tlsStatus,
       mbedtls_high_level_strerr(tlsStatus),
       mbedtls_low_level_strerr(tlsStatus));
@@ -226,7 +243,7 @@ int32_t Mbedtls_Send(NetworkContext_t *pNetworkContext, const void *pBuffer, siz
   int32_t tlsStatus = 0;
   tlsStatus = mbedtls_ssl_write(&(pNetworkContext->pParams->context), pBuffer, bytesToSend);
   if (tlsStatus < 0) {
-    fprintf(stderr, "Mbedtls_Send: mbedtls_ssl_write Failed. tlsStatus = %d, mbedTLSError= %s : %s\n",
+    fprintf(stderr, "Mbedtls_Send: mbedtls_ssl_write Failed. tlsStatus = %d, mbedTLSError = %s : %s\n",
       tlsStatus,
       mbedtls_high_level_strerr(tlsStatus),
       mbedtls_low_level_strerr(tlsStatus));
@@ -240,21 +257,30 @@ void Mbedtls_Disconnect(NetworkContext_t *pNetworkContext) {
 }
 
 void contextInit(MbedtlsContext_t *pContext) {
-    assert( pContext != NULL );
+  assert( pContext != NULL );
 
-    mbedtls_net_init( &( pContext->socketContext ) );
-    mbedtls_ssl_init( &( pContext->context ) );
-    mbedtls_ssl_config_init( &( pContext->config ) );
-    mbedtls_x509_crt_init( &( pContext->rootCa ) );
+  mbedtls_net_init(&(pContext->socketContext));
+  mbedtls_ssl_init(&(pContext->context));
+  mbedtls_ssl_config_init(&(pContext->config));
+  mbedtls_x509_crt_init(&(pContext->rootCa));
+  mbedtls_ctr_drbg_init(&(pContext->ctr_drbg));
+  mbedtls_entropy_init(&(pContext->entropy));
+  mbedtls_ctr_drbg_seed(&(pContext->ctr_drbg), mbedtls_entropy_func, &(pContext->entropy), "some", strlen("some"));
 }
 
 void contextFree(MbedtlsContext_t *pContext) {
   if (pContext != NULL) {
-    mbedtls_net_free( &( pContext->socketContext ) );
-    mbedtls_ssl_free( &( pContext->context ) );
-    mbedtls_ssl_config_free( &( pContext->config ) );
-    mbedtls_x509_crt_free( &( pContext->rootCa ) );
+    mbedtls_net_free(&(pContext->socketContext));
+    mbedtls_ssl_free(&(pContext->context));
+    mbedtls_ssl_config_free( &( pContext->config));
+    mbedtls_x509_crt_free(&(pContext->rootCa));
+    mbedtls_ctr_drbg_free(&(pContext->ctr_drbg));
+    mbedtls_entropy_free(&(pContext->entropy));
   }
+}
+
+void mbedtlsDebugPrint(void *ctx, int level, const char *pFile, int line, const char *pStr) {
+  printf("mbedtlsDebugPrint: |%d| %s\n", level, pStr);
 }
 /** platform imitation END */
 
