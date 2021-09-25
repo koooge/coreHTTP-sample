@@ -19,6 +19,7 @@ http_get: prebuild
 		platform/posix/transport/src/sockets_posix.c
 
 get_pem:
+	mkdir certificates
 	curl -sSL --url https://www.amazontrust.com/repository/AmazonRootCA1.pem -o certificates/AmazonRootCA1.crt
 
 https_get: prebuild get_pem
@@ -107,6 +108,6 @@ run_https_post_json: https_post_json
 	./build/https_post_json.o
 
 clean:
-	rm -rf ./build
+	rm -rf ./build ./certificates
 
 .PHONY: all prebuild http_get https_get mbedtls https_get_mbedtls https_post run run_http_get run_https_get run_https_get_mbedtls run_https_post clean
