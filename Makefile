@@ -19,7 +19,7 @@ http_get: prebuild
 		platform/posix/transport/src/sockets_posix.c
 
 get_pem:
-	mkdir certificates
+	mkdir -p certificates
 	curl -sSL --url https://www.amazontrust.com/repository/AmazonRootCA1.pem -o certificates/AmazonRootCA1.crt
 
 https_get: prebuild get_pem
