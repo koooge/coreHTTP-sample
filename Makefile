@@ -90,7 +90,18 @@ https_post_json: prebuild get_pem
 		platform/posix/transport/src/sockets_posix.c \
 		-lssl -lcrypto
 
-run: run_https_get
+http_get_plustcp: prebuild
+	gcc \
+		-I. \
+		-IcoreHTTP/source/include \
+		-IcoreHTTP/source/interface \
+		-IcoreHTTP/source/dependency/3rdparty/http_parser \
+		-IFreeRTOS-Plus-TCP/include \
+		-o build/http_get_plustcp.o \
+		http_get_plustcp.c \
+		coreHTTP/source/core_http_client.c \
+		coreHTTP/source/dependency/3rdparty/http_parser/http_parser.c \
+		FreeRTOS-Plus-TCP/FreeRTOS_Sockets.c
 
 run_http_get: http_get
 	./build/http_get.o
@@ -107,7 +118,15 @@ run_https_post: https_post
 run_https_post_json: https_post_json
 	./build/https_post_json.o
 
+run_http_get_plustcp: http_get_plustcp
+	./build/http_get_plustcp
+
 clean:
 	rm -rf ./build ./certificates
 
-.PHONY: all prebuild http_get https_get mbedtls https_get_mbedtls https_post run run_http_get run_https_get run_https_get_mbedtls run_https_post clean
+.PHONY: all prebuild
+.PHONY: http_get https_get https_post
+.PHONY: mbedtls https_get_mbedtls
+.PHONY: http_get_plustcp
+.PHONY: run_http_get run_https_get run_https_get_mbedtls run_https_post run_http_get_plustcp
+.PHONY: clean
