@@ -10,3 +10,6 @@
 [submodule "FreeRTOS-Plus-TCP"]
 	path = FreeRTOS-Plus-TCP
 	url = https://github.com/FreeRTOS/FreeRTOS-Plus-TCP.git
+[submodule "FreeRTOS"]
+	path = FreeRTOS
+	url = https://github.com/FreeRTOS/FreeRTOS.git
