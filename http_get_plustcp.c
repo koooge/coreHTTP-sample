@@ -21,19 +21,19 @@ HTTPResponse_t request(const TransportInterface_t *pTransportInterface,
 void http_get();
 
 struct NetworkContext {
-  PlaintextParams_t *pParams;
+  // PlaintextParams_t *pParams;
 };
 
 uint8_t userBuffer[USER_BUFFER_LENGTH];
 
 int32_t connectToServer(NetworkContext_t *pNetworkContext, const char *host, size_t hostLen, const unsigned int port) {
-  ServerInfo_t serverInfo;
+  // ServerInfo_t serverInfo;
 
-  serverInfo.pHostName = host;
-  serverInfo.hostNameLength = hostLen;
-  serverInfo.port = port;
+  // serverInfo.pHostName = host;
+  // serverInfo.hostNameLength = hostLen;
+  // serverInfo.port = port;
   // FreeRTOS_socket()
-  return FreeRTOS_connect();
+  // return FreeRTOS_connect();
   // Plaintext_Connect(pNetworkContext, &serverInfo, TRANSPORT_SEND_RECV_TIMEOUT_MS, TRANSPORT_SEND_RECV_TIMEOUT_MS);
 }
 
@@ -83,16 +83,16 @@ void http_get() {
   int32_t returnStatus = EXIT_SUCCESS;
   TransportInterface_t transportInterface = {0};
   NetworkContext_t networkContext;
-  PlaintextParams_t plaintextParams;
-  networkContext.pParams = &plaintextParams;
+  // PlaintextParams_t plaintextParams;
+  // networkContext.pParams = &plaintextParams;
 
   char *hostname = "httpbin.org";
   char *path = "/get";
 
   returnStatus = connectToServer(&networkContext, hostname, 11, HTTP_PORT);
 
-  transportInterface.recv = FreeRTOS_recv;
-  transportInterface.send = FreeRTOS_send;
+  // transportInterface.recv = FreeRTOS_recv;
+  // transportInterface.send = FreeRTOS_send;
   transportInterface.pNetworkContext = &networkContext;
 
   HTTPResponse_t response = request(&transportInterface, "GET", 3, hostname, 11, "/get", 4);
@@ -105,9 +105,8 @@ void http_get() {
            response.statusCode,
            response.pBody);
 
-  FreeRTOS_shutdown();
-  FreeRTOS_closesocket();
-
+  // FreeRTOS_shutdown();
+  // FreeRTOS_closesocket();
 }
 
 int main(void) {

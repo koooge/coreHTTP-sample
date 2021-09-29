@@ -96,6 +96,7 @@ http_get_plustcp: prebuild
 		-IcoreHTTP/source/include \
 		-IcoreHTTP/source/interface \
 		-IcoreHTTP/source/dependency/3rdparty/http_parser \
+		-IFreeRTOS-Kernel/include \
 		-IFreeRTOS-Plus-TCP/include \
 		-o build/http_get_plustcp.o \
 		http_get_plustcp.c \
